@@ -1,6 +1,6 @@
 <?php
 
-namespace Platform\Planner;
+namespace Platform\Cms;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Schema;
@@ -11,16 +11,12 @@ use Platform\Core\PlatformCore;
 use Platform\Core\Registry\CommandRegistry;
 use Platform\Core\Routing\ModuleRouter;
 
-// Optional: Models und Policies absichern
-use Platform\Planner\Models\PlannerTask;
-use Platform\Planner\Models\PlannerProject;
-use Platform\Planner\Policies\PlannerTaskPolicy;
-use Platform\Planner\Policies\PlannerProjectPolicy;
+// Optional: Models und Policies absichern (vorerst keine spezifischen CMS-Policies)
 
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 
-class PlannerServiceProvider extends ServiceProvider
+class CmsServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
@@ -31,71 +27,69 @@ class PlannerServiceProvider extends ServiceProvider
     {
         // Modul-Registrierung nur, wenn Config & Tabelle vorhanden
         if (
-            config()->has('planner.routing') &&
-            config()->has('planner.navigation') &&
+            config()->has('cms.routing') &&
+            config()->has('cms.navigation') &&
             Schema::hasTable('modules')
         ) {
             PlatformCore::registerModule([
-                'key'        => 'planner',
-                'title'      => 'Planner',
-                'routing'    => config('planner.routing'),
-                'guard'      => config('planner.guard'),
-                'navigation' => config('planner.navigation'),
-                'sidebar'    => config('planner.sidebar'),
-                'billables'  => config('planner.billables'),
+                'key'        => 'cms',
+                'title'      => 'CMS',
+                'routing'    => config('cms.routing'),
+                'guard'      => config('cms.guard'),
+                'navigation' => config('cms.navigation'),
+                'sidebar'    => config('cms.sidebar'),
+                'billables'  => config('cms.billables'),
             ]);
         }
 
         // Routen nur laden, wenn das Modul registriert wurde
-        if (PlatformCore::getModule('planner')) {
-            ModuleRouter::group('planner', function () {
+        if (PlatformCore::getModule('cms')) {
+            ModuleRouter::group('cms', function () {
                 $this->loadRoutesFrom(__DIR__.'/../routes/guest.php');
             }, requireAuth: false);
 
-            ModuleRouter::group('planner', function () {
+            ModuleRouter::group('cms', function () {
                 $this->loadRoutesFrom(__DIR__.'/../routes/web.php');
             });
         }
 
         // Config veröffentlichen & zusammenführen
         $this->publishes([
-            __DIR__.'/../config/planner.php' => config_path('planner.php'),
+            __DIR__.'/../config/cms.php' => config_path('cms.php'),
         ], 'config');
 
-        $this->mergeConfigFrom(__DIR__.'/../config/planner.php', 'planner');
+        $this->mergeConfigFrom(__DIR__.'/../config/cms.php', 'cms');
 
         // Migrations, Views, Livewire-Komponenten
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
-        $this->loadViewsFrom(__DIR__ . '/../resources/views', 'planner');
+        $this->loadViewsFrom(__DIR__ . '/../resources/views', 'cms');
         $this->registerLivewireComponents();
 
-        // Policies nur registrieren, wenn Klassen vorhanden sind
-        if (class_exists(PlannerTask::class) && class_exists(PlannerTaskPolicy::class)) {
-            Gate::policy(PlannerTask::class, PlannerTaskPolicy::class);
-        }
-
-        if (class_exists(PlannerProject::class) && class_exists(PlannerProjectPolicy::class)) {
-            Gate::policy(PlannerProject::class, PlannerProjectPolicy::class);
-        }
+        // CMS-spezifische Policies können hier später registriert werden
 
         // Modelle automatisch scannen und registrieren
-        $this->registerPlannerModels();
+        $this->registerCmsModels();
         
         // Meta-Daten präzisieren (falls Auto-Registrar funktioniert hat)
-        \Platform\Core\Schema\ModelSchemaRegistry::updateMeta('planner.tasks', [
-            'show_route' => 'planner.tasks.show',
-            'route_param' => 'plannerTask',
+        // CMS: Meta-Updates für Modelle
+        \Platform\Core\Schema\ModelSchemaRegistry::updateMeta('cms.projects', [
+            'show_route' => 'cms.boards.index',
+            'route_param' => null,
         ]);
-        \Platform\Core\Schema\ModelSchemaRegistry::updateMeta('planner.projects', [
-            'show_route' => 'planner.projects.show',
-            'route_param' => 'plannerProject',
+        \Platform\Core\Schema\ModelSchemaRegistry::updateMeta('cms.boards', [
+            'show_route' => 'cms.boards.show',
+            'route_param' => 'cmsBoard',
+        ]);
+        \Platform\Core\Schema\ModelSchemaRegistry::updateMeta('cms.contents', [
+            'show_route' => 'cms.contents.show',
+            'route_param' => 'cmsContent',
         ]);
 
         // Kommandos (MVP) registrieren
-        CommandRegistry::register('planner', [
+        CommandRegistry::register('cms', [
             [
-                'key' => 'planner.query',
-                'description' => 'Generische Abfrage für Aufgaben/Projekte.',
+                'key' => 'cms.query',
+                'description' => 'Generische Abfrage für Projekte/Boards/Contents.',
                 'parameters' => [
                     ['name' => 'model', 'type' => 'string', 'required' => true, 'description' => 'tasks|projects'],
                     ['name' => 'q', 'type' => 'string', 'required' => false],
@@ -118,17 +112,16 @@ class PlannerServiceProvider extends ServiceProvider
                 ],
                 'slots' => [ ['name' => 'model'], ['name' => 'q'] ],
                 'guard' => 'web',
-                'handler' => ['service', \Platform\Planner\Services\PlannerCommandService::class.'@query'],
-                'scope' => 'read:planner',
+                'handler' => ['service', \Platform\Cms\Services\CmsCommandService::class.'@query'],
+                'scope' => 'read:cms',
                 'examples' => [
-                    ['desc' => 'Meine Aufgaben', 'slots' => ['model' => 'planner.tasks']],
-                    ['desc' => 'Projektübersicht', 'slots' => ['model' => 'planner.projects']],
-                    ['desc' => 'Aufgaben mit Stichwort', 'slots' => ['model' => 'planner.tasks', 'q' => 'Rechnung']],
+                    ['desc' => 'Inhalte anzeigen', 'slots' => ['model' => 'cms.contents']],
+                    ['desc' => 'Boards anzeigen', 'slots' => ['model' => 'cms.boards']],
                 ],
             ],
             [
-                'key' => 'planner.open',
-                'description' => 'Generisches Öffnen (Navigation) für Aufgaben/Projekte.',
+                'key' => 'cms.open',
+                'description' => 'Generisches Öffnen (Navigation) für Projekte/Boards/Contents.',
                 'parameters' => [
                     ['name' => 'model', 'type' => 'string', 'required' => true, 'description' => 'task|project'],
                     ['name' => 'id', 'type' => 'integer', 'required' => false],
@@ -146,15 +139,15 @@ class PlannerServiceProvider extends ServiceProvider
                 ],
                 'slots' => [ ['name' => 'model'], ['name' => 'id'], ['name' => 'name'] ],
                 'guard' => 'web',
-                'handler' => ['service', \Platform\Planner\Services\PlannerCommandService::class.'@open'],
-                'scope' => 'read:planner',
+                'handler' => ['service', \Platform\Cms\Services\CmsCommandService::class.'@open'],
+                'scope' => 'read:cms',
                 'examples' => [
-                    ['desc' => 'Projekt öffnen', 'slots' => ['model' => 'planner.projects', 'name' => 'Alpha']],
-                    ['desc' => 'Aufgabe öffnen', 'slots' => ['model' => 'planner.tasks', 'name' => 'Login']],
+                    ['desc' => 'Board öffnen', 'slots' => ['model' => 'cms.boards', 'name' => 'Website']],
+                    ['desc' => 'Inhalt öffnen', 'slots' => ['model' => 'cms.contents', 'name' => 'Startseite']],
                 ],
             ],
             [
-                'key' => 'planner.create',
+                'key' => 'cms.create',
                 'description' => 'Generisches Anlegen (schema-validiert).',
                 'parameters' => [
                     ['name' => 'model', 'type' => 'string', 'required' => true],
@@ -166,15 +159,15 @@ class PlannerServiceProvider extends ServiceProvider
                 'phrases' => [ 'erstelle {model}', 'lege {model} an' ],
                 'slots' => [ ['name' => 'model'], ['name' => 'data'] ],
                 'guard' => 'web',
-                'handler' => ['service', \Platform\Planner\Services\PlannerCommandService::class.'@create'],
-                'scope' => 'write:planner.tasks',
+                'handler' => ['service', \Platform\Cms\Services\CmsCommandService::class.'@create'],
+                'scope' => 'write:cms',
                 'examples' => [
-                    ['desc' => 'Task anlegen', 'slots' => ['model' => 'planner.tasks', 'data' => ['title' => 'Rechnung erstellen']]],
+                    ['desc' => 'Inhalt anlegen', 'slots' => ['model' => 'cms.contents', 'data' => ['title' => 'Neue Seite']]],
                 ],
             ],
             [
-                'key' => 'planner.update',
-                'description' => 'Generisches Aktualisieren für Aufgaben/Projekte.',
+                'key' => 'cms.update',
+                'description' => 'Generisches Aktualisieren für Projekte/Boards/Contents.',
                 'parameters' => [
                     ['name' => 'model', 'type' => 'string', 'required' => true],
                     ['name' => 'id', 'type' => 'integer', 'required' => true],
@@ -186,16 +179,15 @@ class PlannerServiceProvider extends ServiceProvider
                 'phrases' => [ 'aktualisiere {model} {id}', 'bearbeite {model} {id}', 'ändere {model} {id}' ],
                 'slots' => [ ['name' => 'model'], ['name' => 'id'], ['name' => 'data'] ],
                 'guard' => 'web',
-                'handler' => ['service', \Platform\Planner\Services\PlannerCommandService::class.'@update'],
-                'scope' => 'write:planner',
+                'handler' => ['service', \Platform\Cms\Services\CmsCommandService::class.'@update'],
+                'scope' => 'write:cms',
                 'examples' => [
-                    ['desc' => 'Aufgabe bearbeiten', 'slots' => ['model' => 'planner.tasks', 'id' => 123, 'data' => ['title' => 'Neuer Titel']]],
-                    ['desc' => 'Projekt bearbeiten', 'slots' => ['model' => 'planner.projects', 'id' => 456, 'data' => ['name' => 'Neuer Name']]],
+                    ['desc' => 'Inhalt bearbeiten', 'slots' => ['model' => 'cms.contents', 'id' => 123, 'data' => ['title' => 'Neuer Titel']]],
                 ],
             ],
             [
-                'key' => 'planner.delete',
-                'description' => 'Generisches Löschen für Aufgaben/Projekte.',
+                'key' => 'cms.delete',
+                'description' => 'Generisches Löschen für Projekte/Boards/Contents.',
                 'parameters' => [
                     ['name' => 'model', 'type' => 'string', 'required' => true],
                     ['name' => 'id', 'type' => 'integer', 'required' => false],
@@ -207,24 +199,23 @@ class PlannerServiceProvider extends ServiceProvider
                 'phrases' => [ 'lösche {model} {id}', 'entferne {model} {name}', 'aufgabe löschen', 'projekt löschen' ],
                 'slots' => [ ['name' => 'model'], ['name' => 'id'], ['name' => 'name'] ],
                 'guard' => 'web',
-                'handler' => ['service', \Platform\Planner\Services\PlannerCommandService::class.'@delete'],
-                'scope' => 'delete:planner',
+                'handler' => ['service', \Platform\Cms\Services\CmsCommandService::class.'@delete'],
+                'scope' => 'delete:cms',
                 'examples' => [
-                    ['desc' => 'Aufgabe löschen', 'slots' => ['model' => 'planner.tasks', 'id' => 123]],
-                    ['desc' => 'Projekt löschen', 'slots' => ['model' => 'planner.projects', 'name' => 'Alpha']],
+                    ['desc' => 'Inhalt löschen', 'slots' => ['model' => 'cms.contents', 'id' => 123]],
                 ],
             ],
         ]);
 
-        // Dynamische Routen als Tools exportieren (GET, benannte Routen mit Prefix planner.)
-        \Platform\Core\Services\RouteToolExporter::registerModuleRoutes('planner');
+        // Dynamische Routen als Tools exportieren (GET, benannte Routen mit Prefix cms.)
+        \Platform\Core\Services\RouteToolExporter::registerModuleRoutes('cms');
     }
 
     protected function registerLivewireComponents(): void
     {
         $basePath = __DIR__ . '/Livewire';
-        $baseNamespace = 'Platform\\Planner\\Livewire';
-        $prefix = 'planner';
+        $baseNamespace = 'Platform\\Cms\\Livewire';
+        $prefix = 'cms';
 
         if (!is_dir($basePath)) {
             return;
@@ -255,9 +246,9 @@ class PlannerServiceProvider extends ServiceProvider
         }
     }
 
-    protected function registerPlannerModels(): void
+    protected function registerCmsModels(): void
     {
-        $baseNs = 'Platform\\Planner\\Models\\';
+        $baseNs = 'Platform\\Cms\\Models\\';
         $baseDir = __DIR__ . '/Models';
         if (!is_dir($baseDir)) {
             return;
@@ -273,11 +264,11 @@ class PlannerServiceProvider extends ServiceProvider
                 if (!\Illuminate\Support\Facades\Schema::hasTable($table)) continue;
                 $moduleKey = \Illuminate\Support\Str::before($table, '_');
                 $entityKey = \Illuminate\Support\Str::after($table, '_');
-                if ($moduleKey !== 'planner' || $entityKey === '') continue;
+                if ($moduleKey !== 'cms' || $entityKey === '') continue;
                 $modelKey = $moduleKey.'.'.$entityKey;
                 $this->registerModel($modelKey, $class);
             } catch (\Throwable $e) {
-                \Log::info('PlannerServiceProvider: Scan-Registrierung übersprungen für '.$class.': '.$e->getMessage());
+                \Log::info('CmsServiceProvider: Scan-Registrierung übersprungen für '.$class.': '.$e->getMessage());
                 continue;
             }
         }
@@ -286,14 +277,14 @@ class PlannerServiceProvider extends ServiceProvider
     protected function registerModel(string $modelKey, string $eloquentClass): void
     {
         if (!class_exists($eloquentClass)) {
-            \Log::info("PlannerServiceProvider: Klasse {$eloquentClass} existiert nicht");
+            \Log::info("CmsServiceProvider: Klasse {$eloquentClass} existiert nicht");
             return;
         }
 
         $model = new $eloquentClass();
         $table = $model->getTable();
         if (!\Illuminate\Support\Facades\Schema::hasTable($table)) {
-            \Log::info("PlannerServiceProvider: Tabelle {$table} existiert nicht");
+            \Log::info("CmsServiceProvider: Tabelle {$table} existiert nicht");
             return;
         }
 
@@ -302,7 +293,7 @@ class PlannerServiceProvider extends ServiceProvider
         $fields = array_values($columns);
         
         // Debug: Log alle verfügbaren Felder
-        \Log::info("PlannerServiceProvider: Verfügbare Felder für {$modelKey}: " . implode(', ', $fields));
+        \Log::info("CmsServiceProvider: Verfügbare Felder für {$modelKey}: " . implode(', ', $fields));
         
         // Standard-Logik für alle Modelle
         $selectable = array_values(array_slice($fields, 0, 6));
@@ -404,9 +395,52 @@ class PlannerServiceProvider extends ServiceProvider
                         $relations[$name] = [ 'type' => 'belongsToMany', 'target' => $tKey ];
                     }
                 }
+
+                // Fallback: Methode ausführen und Relationstyp dynamisch bestimmen
+                try {
+                    $rel = $model->{$name}();
+                    if ($rel instanceof \Illuminate\Database\Eloquent\Relations\BelongsTo) {
+                        $related = $rel->getRelated();
+                        $tTable = $related->getTable();
+                        $tMod = \Illuminate\Support\Str::before($tTable, '_');
+                        $tEnt = \Illuminate\Support\Str::after($tTable, '_');
+                        $tKey = $tMod.'.'.$tEnt;
+                        $fkName = method_exists($rel, 'getForeignKeyName') ? $rel->getForeignKeyName() : (property_exists($rel, 'foreignKeyName') ? $rel->foreignKeyName : null);
+                        $relations[$name] = [
+                            'type' => 'belongsTo',
+                            'target' => $tKey,
+                            'foreign_key' => $fkName,
+                            'owner_key' => 'id',
+                            'fields' => ['id', \Platform\Core\Schema\ModelSchemaRegistry::meta($tKey, 'label_key') ?: 'name'],
+                        ];
+                        if ($fkName && in_array($fkName, $fields, true)) {
+                            $foreignKeys[$fkName] = [
+                                'references' => $tKey,
+                                'field' => 'id',
+                                'label_key' => \Platform\Core\Schema\ModelSchemaRegistry::meta($tKey, 'label_key') ?: 'name',
+                            ];
+                        }
+                    } elseif ($rel instanceof \Illuminate\Database\Eloquent\Relations\HasMany) {
+                        $related = $rel->getRelated();
+                        $tTable = $related->getTable();
+                        $tMod = \Illuminate\Support\Str::before($tTable, '_');
+                        $tEnt = \Illuminate\Support\Str::after($tTable, '_');
+                        $tKey = $tMod.'.'.$tEnt;
+                        $relations[$name] = [ 'type' => 'hasMany', 'target' => $tKey ];
+                    } elseif ($rel instanceof \Illuminate\Database\Eloquent\Relations\BelongsToMany) {
+                        $related = $rel->getRelated();
+                        $tTable = $related->getTable();
+                        $tMod = \Illuminate\Support\Str::before($tTable, '_');
+                        $tEnt = \Illuminate\Support\Str::after($tTable, '_');
+                        $tKey = $tMod.'.'.$tEnt;
+                        $relations[$name] = [ 'type' => 'belongsToMany', 'target' => $tKey ];
+                    }
+                } catch (\Throwable $e) {
+                    // still ignore
+                }
             }
         } catch (\Throwable $e) {
-            \Log::info("PlannerServiceProvider: Fehler beim Ermitteln der Relationen für {$eloquentClass}: " . $e->getMessage());
+            \Log::info("CmsServiceProvider: Fehler beim Ermitteln der Relationen für {$eloquentClass}: " . $e->getMessage());
         }
 
         // Enums und sprachmodell-relevante Daten
@@ -453,7 +487,7 @@ class PlannerServiceProvider extends ServiceProvider
             ],
         ]);
 
-        \Log::info("PlannerServiceProvider: Modell {$modelKey} registriert mit " . count($relations) . " Relationen und " . count($enums) . " Enums");
-        \Log::info("PlannerServiceProvider: Selectable Felder für {$modelKey}: " . implode(', ', $selectable));
+        \Log::info("CmsServiceProvider: Modell {$modelKey} registriert mit " . count($relations) . " Relationen und " . count($enums) . " Enums");
+        \Log::info("CmsServiceProvider: Selectable Felder für {$modelKey}: " . implode(', ', $selectable));
     }
 }

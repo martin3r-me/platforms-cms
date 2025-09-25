@@ -1,14 +1,14 @@
 {
-  "name": "martin3r/platform-planner",
+  "name": "martin3r/platform-cms",
   "autoload": {
     "psr-4": {
-      "Platform\\Planner\\": "src/"
+      "Platform\\Cms\\": "src/"
     }
   },
   "extra": {
     "laravel": {
       "providers": [
-        "Platform\\Planner\\PlannerServiceProvider"
+        "Platform\\Cms\\CmsServiceProvider"
       ]
     }
   }

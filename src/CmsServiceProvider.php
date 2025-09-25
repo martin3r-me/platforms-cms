@@ -25,20 +25,23 @@ class CmsServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        // Modul-Registrierung nur, wenn Config & Tabelle vorhanden
-        if (
-            config()->has('cms.routing') &&
-            config()->has('cms.navigation') &&
-            Schema::hasTable('modules')
-        ) {
+        // Config veröffentlichen & zusammenführen (früh, damit Registrierung Config sieht)
+        $this->publishes([
+            __DIR__.'/../config/cms.php' => config_path('cms.php'),
+        ], 'config');
+
+        $this->mergeConfigFrom(__DIR__.'/../config/cms.php', 'cms');
+
+        // Modul-Registrierung (nach mergeConfigFrom), wenn Module-Tabelle existiert
+        if (Schema::hasTable('modules')) {
             PlatformCore::registerModule([
                 'key'        => 'cms',
                 'title'      => 'CMS',
-                'routing'    => config('cms.routing'),
-                'guard'      => config('cms.guard'),
-                'navigation' => config('cms.navigation'),
-                'sidebar'    => config('cms.sidebar'),
-                'billables'  => config('cms.billables'),
+                'routing'    => config('cms.routing', ['mode' => 'path', 'prefix' => 'cms']),
+                'guard'      => config('cms.guard', 'web'),
+                'navigation' => config('cms.navigation', ['route' => 'cms.dashboard', 'order' => 30]),
+                'sidebar'    => config('cms.sidebar', []),
+                'billables'  => config('cms.billables', []),
             ]);
         }
 
@@ -53,12 +56,7 @@ class CmsServiceProvider extends ServiceProvider
             });
         }
 
-        // Config veröffentlichen & zusammenführen
-        $this->publishes([
-            __DIR__.'/../config/cms.php' => config_path('cms.php'),
-        ], 'config');
-
-        $this->mergeConfigFrom(__DIR__.'/../config/cms.php', 'cms');
+        // (bereits oben zusammengeführt)
 
         // Migrations, Views, Livewire-Komponenten
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');

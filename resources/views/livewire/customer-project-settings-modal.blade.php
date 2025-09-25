@@ -19,10 +19,6 @@
                 <x-ui-input-number wire:model="customerId" placeholder="ID" />
             </div>
             <div class="text-xs text-muted mt-1">Aktuell: {{ $customerDisplay ?? '—' }}</div>
-            <div class="d-flex gap-2 mt-2">
-                <x-ui-input-text wire:model="customerTool" placeholder="Tool-Key (z. B. crm.open)" />
-                <x-ui-input-text wire:model="customerUrl" placeholder="Direkt-URL (optional)" />
-            </div>
         </div>
     </div>
     <x-slot name="footer">

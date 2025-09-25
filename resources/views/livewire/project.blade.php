@@ -28,22 +28,16 @@
                 <x-ui-button variant="neutral-outline" size="xs" @click="$dispatch('open-modal-cms-customer-project', { projectId: {{ $project->id }} })">
                     Kunde zuordnen
                 </x-ui-button>
-                @if($project->customerProject?->customer_url)
-                    <a href="{{ $project->customerProject->customer_url }}" target="_blank" class="text-xs text-primary hover:underline">Kunde öffnen</a>
-                @elseif($project->customerProject?->customer_tool && $project->customerProject?->customer_model && $project->customerProject?->customer_id)
-                    @php
-                        $tool = $project->customerProject->customer_tool;
-                        $model = $project->customerProject->customer_model;
-                        $cid = $project->customerProject->customer_id;
-                        $url = null;
-                        try {
-                            // Versuche generischen Tool-Aufruf über CommandRegistry (falls verfügbar)
-                            $url = \Platform\Core\Registry\CommandRegistry::buildNavigateUrl($tool, ['model' => $model, 'id' => $cid]);
-                        } catch (\Throwable $e) {}
-                    @endphp
-                    @if($url)
-                        <a href="{{ $url }}" target="_blank" class="text-xs text-primary hover:underline">Kunde öffnen</a>
-                    @endif
+                @php($url = null)
+                @if($project->customerProject?->customer_model === 'crm.companies' && $project->customerProject?->customer_id)
+                    @php($url = app(\Platform\Core\Contracts\CrmCompanyResolverInterface::class)->url($project->customerProject->customer_id))
+                @elseif($project->customerProject?->customer_model === 'crm.contacts' && $project->customerProject?->customer_id)
+                    @php($url = app(\Platform\Core\Contracts\CrmContactResolverInterface::class)->url($project->customerProject->customer_id))
+                @elseif($project->customerProject?->company_id)
+                    @php($url = app(\Platform\Core\Contracts\CrmCompanyResolverInterface::class)->url($project->customerProject->company_id))
+                @endif
+                @if(!empty($url))
+                    <a href="{{ $url }}" target="_blank" class="text-xs text-primary hover:underline">Kunde öffnen</a>
                 @endif
             </div>
             <div class="text-sm text-gray-600 mb-4">{{ $project->description ?? 'Keine Beschreibung' }}</div>

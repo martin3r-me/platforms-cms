@@ -21,8 +21,6 @@ class CustomerProjectSettingsModal extends Component
     public $customerModel = null; // 'crm.companies' | 'crm.contacts'
     public $customerId = null;
     public $customerDisplay = null;
-    public $customerTool = null;
-    public $customerUrl = null;
 
     #[On('open-modal-cms-customer-project')]
     public function openModal($projectId)
@@ -33,8 +31,6 @@ class CustomerProjectSettingsModal extends Component
         $this->customerId = $this->project->customerProject?->customer_id;
         $this->resolveCompanyDisplay();
         $this->resolveCustomerDisplay();
-        $this->customerTool = $this->project->customerProject?->customer_tool;
-        $this->customerUrl = $this->project->customerProject?->customer_url;
         $this->loadCompanyOptions('');
         $this->modalShow = true;
     }
@@ -115,8 +111,7 @@ class CustomerProjectSettingsModal extends Component
                 'company_id' => $this->companyId ? (int)$this->companyId : null, // legacy fallback
                 'customer_model' => $this->customerModel,
                 'customer_id' => $this->customerId ? (int)$this->customerId : null,
-                'customer_tool' => $this->customerTool,
-                'customer_url' => $this->customerUrl,
+                // Tool/URL nicht mehr verwendet – alles via Contracts
             ]
         );
 

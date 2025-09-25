@@ -13,7 +13,8 @@ return new class extends Migration
             $table->uuid('uuid')->unique();
             $table->foreignId('project_id')->nullable()->constrained('cms_projects')->nullOnDelete();
             $table->foreignId('board_id')->nullable()->constrained('cms_boards')->nullOnDelete();
-            $table->foreignId('slot_id')->nullable()->constrained('cms_board_slots')->nullOnDelete();
+            // Slot wird in späterer Migration mit FK versehen (Tabelle muss existieren)
+            $table->foreignId('slot_id')->nullable()->index();
             $table->string('title');
             $table->string('slug')->nullable()->index();
             $table->text('excerpt')->nullable();

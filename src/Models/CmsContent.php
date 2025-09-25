@@ -15,7 +15,7 @@ class CmsContent extends Model
     protected $table = 'cms_contents';
 
     protected $fillable = [
-        'uuid', 'project_id', 'board_id', 'title', 'slug', 'excerpt', 'body', 'meta', 'status', 'published_at', 'order',
+        'uuid', 'project_id', 'board_id', 'slot_id', 'title', 'slug', 'excerpt', 'body', 'meta', 'status', 'published_at', 'order',
         'user_id', 'team_id',
     ];
 

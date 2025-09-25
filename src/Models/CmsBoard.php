@@ -50,4 +50,10 @@ class CmsBoard extends Model
         /** @return \Illuminate\Database\Eloquent\Relations\HasMany<\Platform\Cms\Models\CmsContent> */
         return $this->hasMany(CmsContent::class, 'board_id');
     }
+
+    public function slots()
+    {
+        /** @return \Illuminate\Database\Eloquent\Relations\HasMany<\Platform\Cms\Models\CmsBoardSlot> */
+        return $this->hasMany(CmsBoardSlot::class, 'board_id')->orderBy('order');
+    }
 }

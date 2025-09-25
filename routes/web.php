@@ -6,7 +6,6 @@ use Platform\Cms\Livewire\Board;
 use Platform\Cms\Livewire\Content;
 use Platform\Cms\Livewire\Project;
 use Platform\Cms\Livewire\ProjectsIndex;
-use Platform\Cms\Livewire\Project;
 
 Route::get('/', Dashboard::class)->name('cms.dashboard');
 // Projekte

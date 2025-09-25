@@ -3,11 +3,11 @@
     <div class="space-y-3">
         <div>
             <x-ui-label>Unternehmen</x-ui-label>
-            <x-ui-input-select :options="$companyOptions" wire:model="companyId" placeholder="Firma wählen" />
+            <x-ui-input-select name="company_id" :options="$companyOptions" wire:model="companyId" placeholder="Firma wählen" />
             <div class="text-xs text-muted mt-1">Aktuell: {{ $companyDisplay ?? '—' }}</div>
         </div>
         <div>
-            <x-ui-input-text wire:model.debounce.400ms="companySearch" placeholder="Suche Unternehmen..." />
+            <x-ui-input-text name="company_search" wire:model.debounce.400ms="companySearch" placeholder="Suche Unternehmen..." />
         </div>
         <div class="border-t pt-3">
             <x-ui-label>Kunde (polymorph)</x-ui-label>
@@ -15,8 +15,8 @@
                 <x-ui-input-select :options="[
                     ['value' => 'crm.companies', 'label' => 'Firma'],
                     ['value' => 'crm.contacts', 'label' => 'Kontakt'],
-                ]" wire:model="customerModel" placeholder="Typ wählen"/>
-                <x-ui-input-number wire:model="customerId" placeholder="ID" />
+                ]" name="customer_model" wire:model="customerModel" placeholder="Typ wählen"/>
+                <x-ui-input-number name="customer_id" wire:model="customerId" placeholder="ID" />
             </div>
             <div class="text-xs text-muted mt-1">Aktuell: {{ $customerDisplay ?? '—' }}</div>
         </div>

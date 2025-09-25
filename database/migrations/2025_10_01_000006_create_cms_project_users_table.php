@@ -12,9 +12,9 @@ return new class extends Migration
             $table->id();
             $table->foreignId('project_id')->constrained('cms_projects')->cascadeOnDelete();
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
-            $table->string('role')->default('member'); // owner|editor|viewer
+            $table->string('role')->default('owner');
             $table->timestamps();
-            $table->unique(['project_id','user_id']);
+            $table->unique(['project_id', 'user_id']);
         });
     }
 
@@ -24,4 +24,5 @@ return new class extends Migration
     }
 };
 
+ 
 

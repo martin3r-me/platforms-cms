@@ -14,6 +14,6 @@ Route::get('/projects/{cmsProject}', Project::class)->name('cms.projects.show');
 Route::get('/projects/{cmsProject}/boards', Project::class)->name('cms.projects.boards');
 // Boards & Content
 Route::get('/boards', BoardsIndex::class)->name('cms.boards.index');
+Route::get('/boards/create', BoardsIndex::class)->name('cms.boards.create');
 Route::get('/boards/{cmsBoard}', Board::class)->name('cms.boards.show');
 Route::get('/content/{cmsContent}', Content::class)->name('cms.contents.show');
-Route::get('/projects/{cmsProject}', Project::class)->name('cms.projects.show');

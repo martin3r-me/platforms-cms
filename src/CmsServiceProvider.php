@@ -71,8 +71,8 @@ class CmsServiceProvider extends ServiceProvider
         // Meta-Daten präzisieren (falls Auto-Registrar funktioniert hat)
         // CMS: Meta-Updates für Modelle
         \Platform\Core\Schema\ModelSchemaRegistry::updateMeta('cms.projects', [
-            'show_route' => 'cms.boards.index',
-            'route_param' => null,
+            'show_route' => 'cms.projects.show',
+            'route_param' => 'cmsProject',
         ]);
         \Platform\Core\Schema\ModelSchemaRegistry::updateMeta('cms.boards', [
             'show_route' => 'cms.boards.show',

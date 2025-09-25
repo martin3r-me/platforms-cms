@@ -81,17 +81,117 @@ class CmsCommandService
 
     public function create(array $slots): array
     {
-        return ['ok' => false, 'message' => 'Noch nicht implementiert', 'needResolve' => true];
+        $modelKey = (string)($slots['model'] ?? '');
+        $data = (array)($slots['data'] ?? []);
+        $eloquent = Schemas::meta($modelKey, 'eloquent');
+        if (!$eloquent || !class_exists($eloquent)) return ['ok' => false, 'message' => 'Unbekanntes Modell'];
+
+        $required = Schemas::required($modelKey);
+        $writable = Schemas::writable($modelKey);
+
+        foreach ($required as $f) {
+            if (!array_key_exists($f, $data) || $data[$f] === null || $data[$f] === '') {
+                return ['ok' => false, 'message' => 'Pflichtfeld fehlt: '.$f, 'needResolve' => true, 'missing' => $required];
+            }
+        }
+
+        // Einfache Normalisierung
+        if (isset($data['title'])) $data['title'] = trim((string)$data['title']);
+        if (isset($data['name']))  $data['name']  = trim((string)$data['name']);
+
+        $payload = [];
+        foreach ($writable as $f) {
+            if (array_key_exists($f, $data)) {
+                $payload[$f] = $data[$f];
+            }
+        }
+        if (\Illuminate\Support\Facades\Schema::hasColumn((new $eloquent)->getTable(), 'team_id') && auth()->check()) {
+            $payload['team_id'] = auth()->user()->currentTeam?->id;
+        }
+
+        /** @var \Illuminate\Database\Eloquent\Model $row */
+        $row = new $eloquent();
+        $row->fill($payload);
+        $row->save();
+
+        $route = Schemas::meta($modelKey, 'show_route');
+        $param = Schemas::meta($modelKey, 'route_param');
+        $navigate = ($route && $param) ? route($route, [$param => $row->id]) : null;
+        return ['ok' => true, 'message' => 'Angelegt', 'data' => ['id' => $row->id], 'navigate' => $navigate];
     }
 
     public function update(array $slots): array
     {
-        return ['ok' => false, 'message' => 'Noch nicht implementiert', 'needResolve' => true];
+        $modelKey = (string)($slots['model'] ?? '');
+        $id = (int)($slots['id'] ?? 0);
+        $data = (array)($slots['data'] ?? []);
+        $confirmed = (bool)($slots['confirmed'] ?? false);
+
+        $eloquent = Schemas::meta($modelKey, 'eloquent');
+        if (!$eloquent || !class_exists($eloquent)) return ['ok' => false, 'message' => 'Unbekanntes Modell'];
+        if ($id <= 0) return ['ok' => false, 'message' => 'ID erforderlich'];
+
+        /** @var \Illuminate\Database\Eloquent\Model|null $row */
+        $row = $eloquent::find($id);
+        if (!$row) return ['ok' => false, 'message' => 'Eintrag nicht gefunden'];
+
+        if (isset($data['title'])) $data['title'] = trim((string)$data['title']);
+        if (isset($data['name']))  $data['name']  = trim((string)$data['name']);
+        if (isset($data['excerpt'])) $data['excerpt'] = trim((string)$data['excerpt']);
+
+        if (!empty($data['published_at'])) {
+            try { $data['published_at'] = \Carbon\Carbon::parse((string)$data['published_at']); } catch (\Throwable) {}
+        }
+
+        if ($confirmed !== true) {
+            return [
+                'ok' => false,
+                'message' => 'Bestätigung erforderlich',
+                'needResolve' => true,
+                'confirmRequired' => true,
+                'data' => ['proposed' => $data],
+            ];
+        }
+
+        $writable = Schemas::writable($modelKey);
+        $payload = [];
+        foreach ($writable as $f) {
+            if (array_key_exists($f, $data)) {
+                $payload[$f] = $data[$f];
+            }
+        }
+        $row->fill($payload);
+        $row->save();
+
+        $route = Schemas::meta($modelKey, 'show_route');
+        $param = Schemas::meta($modelKey, 'route_param');
+        $navigate = ($route && $param) ? route($route, [$param => $row->id]) : null;
+        return ['ok' => true, 'message' => 'Aktualisiert', 'data' => ['id' => $row->id], 'navigate' => $navigate];
     }
 
     public function delete(array $slots): array
     {
-        return ['ok' => false, 'message' => 'Noch nicht implementiert', 'needResolve' => true];
+        $modelKey = (string)($slots['model'] ?? '');
+        $id = (int)($slots['id'] ?? 0);
+        $name = (string)($slots['name'] ?? '');
+
+        $eloquent = Schemas::meta($modelKey, 'eloquent');
+        if (!$eloquent || !class_exists($eloquent)) return ['ok' => false, 'message' => 'Unbekanntes Modell'];
+
+        $query = $eloquent::query();
+        if ($id > 0) {
+            $query->where('id', $id);
+        } elseif (!empty($name)) {
+            $labelKey = Schemas::meta($modelKey, 'label_key') ?: 'name';
+            $query->where($labelKey, 'LIKE', '%' . $name . '%');
+        } else {
+            return ['ok' => false, 'message' => 'ID oder Name erforderlich'];
+        }
+
+        $row = $query->first();
+        if (!$row) return ['ok' => false, 'message' => 'Eintrag nicht gefunden'];
+        $row->delete();
+        return ['ok' => true, 'message' => 'Gelöscht', 'data' => ['id' => $row->id]];
     }
 }
 

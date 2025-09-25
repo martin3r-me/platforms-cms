@@ -10,12 +10,15 @@ return new class extends Migration
     {
         Schema::create('cms_board_slots', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('board_id')->constrained('cms_boards')->cascadeOnDelete();
+            $table->uuid('uuid')->unique();
+            $table->foreignId('board_id')->nullable()->constrained('cms_boards')->nullOnDelete();
             $table->string('name');
             $table->unsignedInteger('order')->default(0);
+            $table->json('settings')->nullable();
             $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
             $table->foreignId('team_id')->nullable()->constrained('teams')->nullOnDelete();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 
@@ -25,4 +28,5 @@ return new class extends Migration
     }
 };
 
+ 
 

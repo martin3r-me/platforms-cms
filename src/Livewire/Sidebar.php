@@ -30,10 +30,10 @@ class Sidebar extends Component
         $project->order = Project::where('team_id', $teamId)->max('order') + 1;
         $project->save();
 
-        // --> ProjectUser als Owner anlegen!
+        // --> ProjectUser als Owner anlegen
         $project->projectUsers()->create([
             'user_id' => $user->id,
-            'role' => \Platform\Planner\Enums\ProjectRole::OWNER->value,
+            'role' => 'owner',
         ]);
         // Alternativ, falls du direkt das Model nutzen möchtest:
         // \Platform\Planner\Models\PlannerProjectUser::create([
@@ -47,26 +47,20 @@ class Sidebar extends Component
 
     public function render()
     {
-        // Dynamische Projects für CMS
+        // Dynamische Projects: team-basiert und Mitgliedschaft
+        $uid = auth()->id();
+        $tid = auth()->user()?->currentTeam->id ?? null;
         $projects = Project::query()
-            ->where('team_id', auth()->user()?->currentTeam->id ?? null)
+            ->where('team_id', $tid)
+            ->where(function($q) use ($uid){
+                $q->where('user_id', $uid)
+                  ->orWhereHas('projectUsers', fn($qq) => $qq->where('user_id', $uid));
+            })
             ->orderBy('name')
             ->get();
 
-        $customerProjects = $projects->filter(function ($p) {
-            $type = is_string($p->project_type) ? $p->project_type : ($p->project_type?->value ?? null);
-            return $type === 'customer';
-        });
-
-        $internalProjects = $projects->filter(function ($p) {
-            $type = is_string($p->project_type) ? $p->project_type : ($p->project_type?->value ?? null);
-            return $type !== 'customer';
-        });
-
         return view('cms::livewire.sidebar', [
             'projects' => $projects,
-            'customerProjects' => $customerProjects,
-            'internalProjects' => $internalProjects,
         ]);
     }
 }

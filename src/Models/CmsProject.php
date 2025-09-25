@@ -40,4 +40,10 @@ class CmsProject extends Model
         /** @return \Illuminate\Database\Eloquent\Relations\HasMany<\Platform\Cms\Models\CmsBoard> */
         return $this->hasMany(CmsBoard::class, 'project_id');
     }
+
+    public function projectUsers()
+    {
+        /** @return \Illuminate\Database\Eloquent\Relations\HasMany<\Platform\Cms\Models\CmsProjectUser> */
+        return $this->hasMany(CmsProjectUser::class, 'project_id');
+    }
 }

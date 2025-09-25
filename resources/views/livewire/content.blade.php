@@ -1,5 +1,5 @@
 <div>
-    <x-page.title>{{ $content->title }}</x-page.title>
+    <h1 class="text-2xl font-bold mb-4">{{ $content->title }}</h1>
     @if($content->excerpt)
         <div class="text-sm text-gray-500 mb-4">{{ $content->excerpt }}</div>
     @endif

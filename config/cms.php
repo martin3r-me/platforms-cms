@@ -30,12 +30,12 @@ return [
             ],
         ],
         [
-            'group' => 'Boards',
+            'group' => 'Projekte',
             'dynamic' => [
-                'model'     => \Platform\Cms\Models\CmsBoard::class,
+                'model'     => \Platform\Cms\Models\CmsProject::class,
                 'team_based' => true,
                 'order_by'  => 'name',
-                'route'     => 'cms.boards.show',
+                'route'     => 'cms.projects.show',
                 'icon'      => 'heroicon-o-folder',
                 'label_key' => 'name',
             ],

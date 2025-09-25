@@ -3,7 +3,7 @@
     <div class="mb-6">
         <div class="d-flex justify-between items-center">
             <div>
-                <h1 class="text-2xl font-bold text-gray-900">Dashboard</h1>
+                <h1 class="text-2xl font-bold text-gray-900">CMS Dashboard</h1>
                 <p class="text-gray-600">{{ $currentDay }}, {{ $currentDate }}</p>
             </div>
             <div class="d-flex items-center gap-4"></div>

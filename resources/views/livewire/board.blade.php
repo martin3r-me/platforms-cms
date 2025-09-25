@@ -1,5 +1,5 @@
 <div>
-    <x-page.title>{{ $board->name }}</x-page.title>
+    <h1 class="text-2xl font-bold mb-4">{{ $board->name }}</h1>
     @if($board->description)
         <div class="text-sm text-gray-500 mb-4">{{ $board->description }}</div>
     @endif

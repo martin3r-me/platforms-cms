@@ -1,5 +1,5 @@
 <div>
-    <x-page.title>Boards</x-page.title>
+    <h1 class="text-2xl font-bold mb-4">Boards</h1>
     <div class="space-y-4">
         @forelse($boards as $board)
             <a href="{{ route('cms.boards.show', $board->id) }}" class="block p-4 bg-white rounded border hover:bg-gray-50" wire:navigate>

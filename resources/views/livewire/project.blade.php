@@ -11,6 +11,41 @@
                     </div>
                 </x-ui-button>
             </div>
+            <div class="mt-2 d-flex items-center gap-2">
+                <x-ui-badge>
+                    Kunde: 
+                    @php($cp = $project->customerProject)
+                    @if($cp && $cp->customer_model === 'crm.companies' && $cp->customer_id)
+                        {{ app(\Platform\Core\Contracts\CrmCompanyResolverInterface::class)->displayName($cp->customer_id) }}
+                    @elseif($cp && $cp->customer_model === 'crm.contacts' && $cp->customer_id)
+                        {{ app(\Platform\Core\Contracts\CrmContactResolverInterface::class)->displayName($cp->customer_id) }}
+                    @elseif($cp && $cp->company_id)
+                        {{ app(\Platform\Core\Contracts\CrmCompanyResolverInterface::class)->displayName($cp->company_id) }}
+                    @else
+                        Keiner
+                    @endif
+                </x-ui-badge>
+                <x-ui-button variant="neutral-outline" size="xs" @click="$dispatch('open-modal-cms-customer-project', { projectId: {{ $project->id }} })">
+                    Kunde zuordnen
+                </x-ui-button>
+                @if($project->customerProject?->customer_url)
+                    <a href="{{ $project->customerProject->customer_url }}" target="_blank" class="text-xs text-primary hover:underline">Kunde öffnen</a>
+                @elseif($project->customerProject?->customer_tool && $project->customerProject?->customer_model && $project->customerProject?->customer_id)
+                    @php
+                        $tool = $project->customerProject->customer_tool;
+                        $model = $project->customerProject->customer_model;
+                        $cid = $project->customerProject->customer_id;
+                        $url = null;
+                        try {
+                            // Versuche generischen Tool-Aufruf über CommandRegistry (falls verfügbar)
+                            $url = \Platform\Core\Registry\CommandRegistry::buildNavigateUrl($tool, ['model' => $model, 'id' => $cid]);
+                        } catch (\Throwable $e) {}
+                    @endphp
+                    @if($url)
+                        <a href="{{ $url }}" target="_blank" class="text-xs text-primary hover:underline">Kunde öffnen</a>
+                    @endif
+                @endif
+            </div>
             <div class="text-sm text-gray-600 mb-4">{{ $project->description ?? 'Keine Beschreibung' }}</div>
             <div class="grid grid-cols-2 gap-2 mb-4">
                 <x-ui-dashboard-tile title="Inhalte (offen)" :count="$openCount" icon="document-text" variant="secondary" size="sm" />
@@ -70,6 +105,7 @@
     </div>
 
     <livewire:cms.project-settings-modal/>
+    <livewire:cms.customer-project-settings-modal/>
     <livewire:cms.board-slot-settings-modal/>
 </div>
 

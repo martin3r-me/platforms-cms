@@ -46,4 +46,10 @@ class CmsProject extends Model
         /** @return \Illuminate\Database\Eloquent\Relations\HasMany<\Platform\Cms\Models\CmsProjectUser> */
         return $this->hasMany(CmsProjectUser::class, 'project_id');
     }
+
+    public function customerProject()
+    {
+        /** @return \Illuminate\Database\Eloquent\Relations\HasOne<\Platform\Cms\Models\CmsCustomerProject> */
+        return $this->hasOne(\Platform\Cms\Models\CmsCustomerProject::class, 'project_id');
+    }
 }

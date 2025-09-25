@@ -23,6 +23,20 @@
             <span x-show="!collapsed" class="truncate">Dashboard</span>
         </a>
 
+        {{-- Projekte --}}
+        <a href="{{ route('cms.projects.index') }}"
+           class="relative d-flex items-center p-2 my-1 rounded-md font-medium transition"
+           :class="[
+               window.location.pathname.includes('/cms/projects')
+                   ? 'bg-primary text-on-primary shadow-md'
+                   : 'text-black hover:bg-primary-10 hover:text-primary hover:shadow-md',
+               collapsed ? 'justify-center' : 'gap-3'
+           ]"
+           wire:navigate>
+            <x-heroicon-o-folder class="w-6 h-6 flex-shrink-0"/>
+            <span x-show="!collapsed" class="truncate">Projekte</span>
+        </a>
+
         {{-- Projekt anlegen --}}
         <a href="#"
            class="relative d-flex items-center p-2 my-1 rounded-md font-medium transition"

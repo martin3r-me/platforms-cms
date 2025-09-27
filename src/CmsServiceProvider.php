@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
 use Livewire\Livewire;
 use Platform\Core\PlatformCore;
-use Platform\Core\Registry\CommandRegistry;
+// CommandRegistry entfernt
 use Platform\Core\Routing\ModuleRouter;
 
 // Optional: Models und Policies absichern (vorerst keine spezifischen CMS-Policies)
@@ -83,127 +83,7 @@ class CmsServiceProvider extends ServiceProvider
             'route_param' => 'cmsContent',
         ]);
 
-        // Kommandos (MVP) registrieren
-        CommandRegistry::register('cms', [
-            [
-                'key' => 'cms.query',
-                'description' => 'Generische Abfrage für Projekte/Boards/Contents.',
-                'parameters' => [
-                    ['name' => 'model', 'type' => 'string', 'required' => true, 'description' => 'tasks|projects'],
-                    ['name' => 'q', 'type' => 'string', 'required' => false],
-                    ['name' => 'filters', 'type' => 'object', 'required' => false],
-                    ['name' => 'sort', 'type' => 'string', 'required' => false],
-                    ['name' => 'order', 'type' => 'string', 'required' => false],
-                    ['name' => 'limit', 'type' => 'integer', 'required' => false],
-                    ['name' => 'fields', 'type' => 'string', 'required' => false],
-                ],
-                'impact' => 'low',
-                'confirmRequired' => false,
-                'autoAllowed' => true,
-                'phrases' => [
-                    'suche {model} {q}',
-                    'zeige {model}',
-                    'übersicht {model}',
-                    'meine aufgaben',
-                    'übersicht aufgaben',
-                    'zeige meine aufgaben',
-                ],
-                'slots' => [ ['name' => 'model'], ['name' => 'q'] ],
-                'guard' => 'web',
-                'handler' => ['service', \Platform\Cms\Services\CmsCommandService::class.'@query'],
-                'scope' => 'read:cms',
-                'examples' => [
-                    ['desc' => 'Inhalte anzeigen', 'slots' => ['model' => 'cms.contents']],
-                    ['desc' => 'Boards anzeigen', 'slots' => ['model' => 'cms.boards']],
-                ],
-            ],
-            [
-                'key' => 'cms.open',
-                'description' => 'Generisches Öffnen (Navigation) für Projekte/Boards/Contents.',
-                'parameters' => [
-                    ['name' => 'model', 'type' => 'string', 'required' => true, 'description' => 'task|project'],
-                    ['name' => 'id', 'type' => 'integer', 'required' => false],
-                    ['name' => 'uuid', 'type' => 'string', 'required' => false],
-                    ['name' => 'name', 'type' => 'string', 'required' => false],
-                ],
-                'impact' => 'low',
-                'confirmRequired' => false,
-                'autoAllowed' => true,
-                'phrases' => [
-                    'öffne {model} {id}',
-                    'öffne {model} {name}',
-                    'zeige {model} {name}',
-                    'gehe zu {model} {name}',
-                ],
-                'slots' => [ ['name' => 'model'], ['name' => 'id'], ['name' => 'name'] ],
-                'guard' => 'web',
-                'handler' => ['service', \Platform\Cms\Services\CmsCommandService::class.'@open'],
-                'scope' => 'read:cms',
-                'examples' => [
-                    ['desc' => 'Board öffnen', 'slots' => ['model' => 'cms.boards', 'name' => 'Website']],
-                    ['desc' => 'Inhalt öffnen', 'slots' => ['model' => 'cms.contents', 'name' => 'Startseite']],
-                ],
-            ],
-            [
-                'key' => 'cms.create',
-                'description' => 'Generisches Anlegen (schema-validiert).',
-                'parameters' => [
-                    ['name' => 'model', 'type' => 'string', 'required' => true],
-                    ['name' => 'data', 'type' => 'object', 'required' => true],
-                ],
-                'impact' => 'medium',
-                'confirmRequired' => true,
-                'autoAllowed' => false,
-                'phrases' => [ 'erstelle {model}', 'lege {model} an' ],
-                'slots' => [ ['name' => 'model'], ['name' => 'data'] ],
-                'guard' => 'web',
-                'handler' => ['service', \Platform\Cms\Services\CmsCommandService::class.'@create'],
-                'scope' => 'write:cms',
-                'examples' => [
-                    ['desc' => 'Inhalt anlegen', 'slots' => ['model' => 'cms.contents', 'data' => ['title' => 'Neue Seite']]],
-                ],
-            ],
-            [
-                'key' => 'cms.update',
-                'description' => 'Generisches Aktualisieren für Projekte/Boards/Contents.',
-                'parameters' => [
-                    ['name' => 'model', 'type' => 'string', 'required' => true],
-                    ['name' => 'id', 'type' => 'integer', 'required' => true],
-                    ['name' => 'data', 'type' => 'object', 'required' => true],
-                ],
-                'impact' => 'medium',
-                'confirmRequired' => true,
-                'autoAllowed' => false,
-                'phrases' => [ 'aktualisiere {model} {id}', 'bearbeite {model} {id}', 'ändere {model} {id}' ],
-                'slots' => [ ['name' => 'model'], ['name' => 'id'], ['name' => 'data'] ],
-                'guard' => 'web',
-                'handler' => ['service', \Platform\Cms\Services\CmsCommandService::class.'@update'],
-                'scope' => 'write:cms',
-                'examples' => [
-                    ['desc' => 'Inhalt bearbeiten', 'slots' => ['model' => 'cms.contents', 'id' => 123, 'data' => ['title' => 'Neuer Titel']]],
-                ],
-            ],
-            [
-                'key' => 'cms.delete',
-                'description' => 'Generisches Löschen für Projekte/Boards/Contents.',
-                'parameters' => [
-                    ['name' => 'model', 'type' => 'string', 'required' => true],
-                    ['name' => 'id', 'type' => 'integer', 'required' => false],
-                    ['name' => 'name', 'type' => 'string', 'required' => false],
-                ],
-                'impact' => 'high',
-                'confirmRequired' => true,
-                'autoAllowed' => false,
-                'phrases' => [ 'lösche {model} {id}', 'entferne {model} {name}', 'aufgabe löschen', 'projekt löschen' ],
-                'slots' => [ ['name' => 'model'], ['name' => 'id'], ['name' => 'name'] ],
-                'guard' => 'web',
-                'handler' => ['service', \Platform\Cms\Services\CmsCommandService::class.'@delete'],
-                'scope' => 'delete:cms',
-                'examples' => [
-                    ['desc' => 'Inhalt löschen', 'slots' => ['model' => 'cms.contents', 'id' => 123]],
-                ],
-            ],
-        ]);
+        // Commands entfernt - Sidebar soll leer sein
 
         // Dynamische Routen als Tools exportieren (GET, benannte Routen mit Prefix cms.)
         \Platform\Core\Services\RouteToolExporter::registerModuleRoutes('cms');

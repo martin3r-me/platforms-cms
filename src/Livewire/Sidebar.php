@@ -51,6 +51,7 @@ class Sidebar extends Component
         $uid = auth()->id();
         $tid = auth()->user()?->currentTeam->id ?? null;
         $projects = Project::query()
+            ->with('customerProject')
             ->where('team_id', $tid)
             ->where(function($q) use ($uid){
                 $q->where('user_id', $uid)
@@ -59,8 +60,35 @@ class Sidebar extends Component
             ->orderBy('name')
             ->get();
 
+        // Gruppierung analog Planner: nach Kunde (Resolver-basierte Anzeige)
+        $groups = collect();
+        foreach ($projects as $p) {
+            $cp = $p->customerProject;
+            $label = 'Ohne Kunde';
+            try {
+                if ($cp && $cp->customer_model === 'crm.companies' && $cp->customer_id) {
+                    $label = app(\Platform\Core\Contracts\CrmCompanyResolverInterface::class)->displayName((int)$cp->customer_id) ?: 'Firma #'.$cp->customer_id;
+                } elseif ($cp && $cp->customer_model === 'crm.contacts' && $cp->customer_id) {
+                    $label = app(\Platform\Core\Contracts\CrmContactResolverInterface::class)->displayName((int)$cp->customer_id) ?: 'Kontakt #'.$cp->customer_id;
+                } elseif ($cp && $cp->company_id) {
+                    $label = app(\Platform\Core\Contracts\CrmCompanyResolverInterface::class)->displayName((int)$cp->company_id) ?: 'Firma #'.$cp->company_id;
+                }
+            } catch (\Throwable $e) {
+                $label = 'Ohne Kunde';
+            }
+            if (!isset($groups[$label])) {
+                $groups[$label] = collect();
+            }
+            $groups[$label]->push($p);
+        }
+
+        // Sortiere Gruppen alphabetisch und Projekte innerhalb der Gruppen
+        $groups = collect($groups)->sortKeys()->map(function($items){
+            return $items->sortBy('name')->values();
+        });
+
         return view('cms::livewire.sidebar', [
-            'projects' => $projects,
+            'groups' => $groups,
         ]);
     }
 }

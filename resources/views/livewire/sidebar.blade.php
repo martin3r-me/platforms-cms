@@ -35,33 +35,30 @@
         </a>
     </div>
 
-    {{-- Abschnitt: Projekte --}}
+    {{-- Abschnitt: Projekte (nach Kunde gruppiert) --}}
     <div x-show="!collapsed">
         <div class="mt-2">
-            <button type="button" class="w-full d-flex items-center justify-between px-3 py-2 text-sm uppercase text-secondary hover:bg-muted-5 rounded" @click="openProjects = !openProjects" x-data="{ openProjects: true }">
-                <span>Projekte</span>
-                <x-heroicon-o-chevron-down class="w-4 h-4" x-show="!openProjects"/>
-                <x-heroicon-o-chevron-up class="w-4 h-4" x-show="openProjects"/>
-            </button>
-            <div x-show="openProjects" class="mt-1">
-                @foreach(($projects ?? []) as $project)
-                    <a href="{{ route('cms.projects.show', ['cmsProject' => $project]) }}"
-                       class="relative d-flex items-center p-2 my-1 rounded-md font-medium transition gap-3"
-                       :class="[
-                           window.location.pathname.includes('/cms/projects/{{ $project->id }}') || 
-                           window.location.pathname.endsWith('/cms/projects/{{ $project->id }}')
-                               ? 'bg-primary text-on-primary shadow-md'
-                               : 'text-black hover:bg-primary-10 hover:text-primary hover:shadow-md'
-                       ]"
-                       wire:navigate>
-                        <x-heroicon-o-folder class="w-6 h-6 flex-shrink-0"/>
-                        <span class="truncate">{{ $project->name }}</span>
-                    </a>
-                @endforeach
-                @if(($projects ?? collect())->isEmpty())
-                    <div class="px-3 py-1 text-xs text-muted">Keine Projekte</div>
-                @endif
-            </div>
+            @forelse(($groups ?? collect()) as $customer => $items)
+                <div class="mt-2">
+                    <div class="px-3 py-2 text-xs uppercase text-secondary">{{ $customer }}</div>
+                    @foreach($items as $project)
+                        <a href="{{ route('cms.projects.show', ['cmsProject' => $project]) }}"
+                           class="relative d-flex items-center p-2 my-1 rounded-md font-medium transition gap-3"
+                           :class="[
+                               window.location.pathname.includes('/cms/projects/{{ $project->id }}') || 
+                               window.location.pathname.endsWith('/cms/projects/{{ $project->id }}')
+                                   ? 'bg-primary text-on-primary shadow-md'
+                                   : 'text-black hover:bg-primary-10 hover:text-primary hover:shadow-md'
+                           ]"
+                           wire:navigate>
+                            <x-heroicon-o-folder class="w-6 h-6 flex-shrink-0"/>
+                            <span class="truncate">{{ $project->name }}</span>
+                        </a>
+                    @endforeach
+                </div>
+            @empty
+                <div class="px-3 py-1 text-xs text-muted">Keine Projekte</div>
+            @endforelse
         </div>
     </div>
 </div>

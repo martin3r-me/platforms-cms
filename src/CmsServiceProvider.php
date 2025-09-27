@@ -85,8 +85,7 @@ class CmsServiceProvider extends ServiceProvider
 
         // Commands entfernt - Sidebar soll leer sein
 
-        // Dynamische Routen als Tools exportieren (GET, benannte Routen mit Prefix cms.)
-        \Platform\Core\Services\RouteToolExporter::registerModuleRoutes('cms');
+        // RouteToolExporter entfernt - Sidebar soll leer sein
     }
 
     protected function registerLivewireComponents(): void

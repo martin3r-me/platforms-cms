@@ -65,23 +65,7 @@ class CmsServiceProvider extends ServiceProvider
 
         // CMS-spezifische Policies können hier später registriert werden
 
-        // Modelle automatisch scannen und registrieren
-        $this->registerCmsModels();
-        
-        // Meta-Daten präzisieren (falls Auto-Registrar funktioniert hat)
-        // CMS: Meta-Updates für Modelle
-        \Platform\Core\Schema\ModelSchemaRegistry::updateMeta('cms.projects', [
-            'show_route' => 'cms.projects.show',
-            'route_param' => 'cmsProject',
-        ]);
-        \Platform\Core\Schema\ModelSchemaRegistry::updateMeta('cms.boards', [
-            'show_route' => 'cms.boards.show',
-            'route_param' => 'cmsBoard',
-        ]);
-        \Platform\Core\Schema\ModelSchemaRegistry::updateMeta('cms.contents', [
-            'show_route' => 'cms.contents.show',
-            'route_param' => 'cmsContent',
-        ]);
+        // Modelle-Scan & Schema-Registry entfernt (war für Agent)
 
         // Commands entfernt - Sidebar soll leer sein
 
@@ -169,8 +153,7 @@ class CmsServiceProvider extends ServiceProvider
         $columns = \Illuminate\Support\Facades\Schema::getColumnListing($table);
         $fields = array_values($columns);
         
-        // Debug: Log alle verfügbaren Felder
-        \Log::info("CmsServiceProvider: Verfügbare Felder für {$modelKey}: " . implode(', ', $fields));
+        // Debug-Logs entfernt
         
         // Standard-Logik für alle Modelle
         $selectable = array_values(array_slice($fields, 0, 6));
@@ -364,7 +347,6 @@ class CmsServiceProvider extends ServiceProvider
             ],
         ]);
 
-        \Log::info("CmsServiceProvider: Modell {$modelKey} registriert mit " . count($relations) . " Relationen und " . count($enums) . " Enums");
-        \Log::info("CmsServiceProvider: Selectable Felder für {$modelKey}: " . implode(', ', $selectable));
+        // Debug-Logs entfernt
     }
 }

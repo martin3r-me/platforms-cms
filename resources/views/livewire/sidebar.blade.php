@@ -59,6 +59,25 @@
             @empty
                 <div class="px-3 py-1 text-xs text-muted">Keine Projekte</div>
             @endforelse
+            @if(($internalProjects ?? collect())->isNotEmpty())
+                <div class="mt-4">
+                    <div class="px-3 py-2 text-xs uppercase text-secondary">Intern</div>
+                    @foreach(($internalProjects ?? []) as $project)
+                        <a href="{{ route('cms.projects.show', ['cmsProject' => $project]) }}"
+                           class="relative d-flex items-center p-2 my-1 rounded-md font-medium transition gap-3"
+                           :class="[
+                               window.location.pathname.includes('/cms/projects/{{ $project->id }}') || 
+                               window.location.pathname.endsWith('/cms/projects/{{ $project->id }}')
+                                   ? 'bg-primary text-on-primary shadow-md'
+                                   : 'text-black hover:bg-primary-10 hover:text-primary hover:shadow-md'
+                           ]"
+                           wire:navigate>
+                            <x-heroicon-o-folder class="w-6 h-6 flex-shrink-0"/>
+                            <span class="truncate">{{ $project->name }}</span>
+                        </a>
+                    @endforeach
+                </div>
+            @endif
         </div>
     </div>
 </div>

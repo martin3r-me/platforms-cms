@@ -16,7 +16,7 @@ class CmsProject extends Model
 
     protected $fillable = [
         'uuid', 'name', 'description', 'order', 'is_active',
-        'user_id', 'team_id',
+        'user_id', 'team_id', 'project_type',
     ];
 
     protected static function booted(): void

@@ -5,6 +5,8 @@ namespace Platform\Cms\Livewire;
 use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
 use Platform\Cms\Models\CmsProject as Project;
+use Platform\Cms\Models\CmsBoard;
+use Platform\Cms\Models\CmsBoardSlot;
 use Livewire\Attributes\On; 
 
 
@@ -42,7 +44,27 @@ class Sidebar extends Component
         //     'role' => \Platform\Planner\Enums\ProjectRole::OWNER->value,
         // ]);
 
-        return redirect()->route('cms.boards.index');
+        // 2. Standard-Board und Slots (Backlog + 3 Spalten) anlegen
+        $board = CmsBoard::create([
+            'project_id' => $project->id,
+            'name' => 'Hauptboard',
+            'order' => 1,
+            'user_id' => $user->id,
+            'team_id' => $teamId,
+        ]);
+
+        $defaultSlots = ['To Do', 'Doing', 'Done'];
+        foreach ($defaultSlots as $index => $name) {
+            CmsBoardSlot::create([
+                'board_id' => $board->id,
+                'name' => $name,
+                'order' => $index + 1,
+                'user_id' => $user->id,
+                'team_id' => $teamId,
+            ]);
+        }
+
+        return redirect()->route('cms.projects.show', ['cmsProject' => $project->id]);
     }
 
     public function render()
@@ -60,9 +82,19 @@ class Sidebar extends Component
             ->orderBy('name')
             ->get();
 
-        // Gruppierung analog Planner: nach Kunde (Resolver-basierte Anzeige)
+        // Split: Kundenprojekte vs. interne
+        $customerProjects = $projects->filter(function ($p) {
+            $type = is_string($p->project_type) ? $p->project_type : ($p->project_type?->value ?? null);
+            return $type === 'customer';
+        });
+        $internalProjects = $projects->filter(function ($p) {
+            $type = is_string($p->project_type) ? $p->project_type : ($p->project_type?->value ?? null);
+            return $type !== 'customer';
+        });
+
+        // Gruppierung nach Kunde (Resolver-basierte Anzeige) nur für Kundenprojekte
         $groups = collect();
-        foreach ($projects as $p) {
+        foreach ($customerProjects as $p) {
             $cp = $p->customerProject;
             $label = 'Ohne Kunde';
             try {
@@ -89,6 +121,7 @@ class Sidebar extends Component
 
         return view('cms::livewire.sidebar', [
             'groups' => $groups,
+            'internalProjects' => $internalProjects->sortBy('name')->values(),
         ]);
     }
 }

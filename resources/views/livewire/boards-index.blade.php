@@ -14,9 +14,9 @@
                 </div>
             </a>
         @empty
-            <x-card>
+            <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
                 <div class="text-sm text-gray-500">Noch keine Boards vorhanden.</div>
-            </x-card>
+            </div>
         @endforelse
     </div>
 </div>
